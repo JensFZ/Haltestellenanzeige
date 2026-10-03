@@ -10,11 +10,10 @@ npm start          # http://localhost:3000
 npm test
 ```
 
-Oder per Docker:
+Oder per Docker Compose (Port änderbar über `HOST_PORT`, Standard 3000):
 
 ```bash
-docker build -t haltestellenanzeige .
-docker run -d --restart unless-stopped -p 3000:3000 haltestellenanzeige
+docker compose up -d --build
 ```
 
 Auf `http://<server>:3000/` Haltestelle suchen, Weg in Minuten und optionale Filter eintragen → Links für Browser und ESP.
