@@ -1,0 +1,75 @@
+name: Deploy to Ubuntu server (via Tailscale)
+
+# Baut das Docker-Image im Runner, überträgt es über das Tailnet per SSH auf den Server
+# nach /root/haltestellenanzeige, lädt es dort per `docker load` und startet es via Compose.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  IMAGE: haltestellenanzeige:latest
+  REMOTE_DIR: /root/haltestellenanzeige
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test
+        run: npm test
+
+      - name: Build Docker image
+        run: docker build -t "$IMAGE" .
+
+      - name: Save image (gzip)
+        run: docker save "$IMAGE" | gzip > image.tar.gz
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+
+      - name: Deploy
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          SSH_OPTS="-i ~/.ssh/id_deploy -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30"
+
+          echo "→ Zielverzeichnis sicherstellen"
+          ssh $SSH_OPTS "$USER@$HOST" "mkdir -p $REMOTE_DIR"
+
+          echo "→ Compose + Image übertragen"
+          scp $SSH_OPTS docker-compose.prod.yml "$USER@$HOST:$REMOTE_DIR/docker-compose.yml"
+          scp $SSH_OPTS image.tar.gz            "$USER@$HOST:$REMOTE_DIR/"
+
+          echo "→ Image laden und Container starten"
+          ssh $SSH_OPTS "$USER@$HOST" "\
+            set -e; \
+            cd $REMOTE_DIR; \
+            gunzip -c image.tar.gz | docker load; \
+            docker compose up -d; \
+            rm -f image.tar.gz; \
+            docker image prune -f; \
+            docker compose ps"

@@ -16,6 +16,8 @@ Oder per Docker Compose (Port änderbar über `HOST_PORT`, Standard 3000):
 docker compose up -d --build
 ```
 
+**Deployment:** Jeder Push auf `main` testet, baut das Image und spielt es über Tailscale per SSH nach `/root/haltestellenanzeige` auf den Server ([deploy.yml](.github/workflows/deploy.yml), [docker-compose.prod.yml](docker-compose.prod.yml)). Benötigte Repo-Secrets und Tailscale-Setup wie im Repo [dave](https://github.com/JensFZ/dave/blob/main/DEPLOYMENT.md): `TAILSCALE_OAUTH_CLIENT_ID`, `TAILSCALE_OAUTH_SECRET`, `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`.
+
 Auf `http://<server>:3000/` Haltestelle suchen, Weg in Minuten und optionale Filter eintragen → Links für Browser und ESP.
 
 | Pfad | Zweck |
