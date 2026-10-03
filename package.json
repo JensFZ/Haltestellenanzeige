@@ -1,0 +1,15 @@
+{
+  "name": "haltestellenanzeige",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "node --experimental-strip-types src/server.ts",
+    "test": "node --experimental-strip-types --test src/board.test.ts"
+  },
+  "dependencies": {
+    "hafas-client": "^6.3.6",
+    "puppeteer": "^25.12.0"
+  }
+}

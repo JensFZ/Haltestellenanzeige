@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abfahrten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:ital,wght@0,500;0,700;1,500&display=block" rel="stylesheet">
+<style>
+  :root { --red: #d0021b; --dark: #3c3c3a; --row: #c6c3bd; --ink: #222; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: #202020; overflow: hidden; }
+  body { font-family: 'Fira Sans Condensed', sans-serif; color: var(--ink); }
+  #stage { width: 800px; height: 480px; background: #fff; padding: 16px; position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .r { display: flex; gap: 10px; height: 58px; margin-top: 5px; }
+  .r.head { height: 72px; margin: 0 0 8px; }
+  .badge { width: 80px; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 34px; }
+  .badge span { display: grid; place-items: center; width: 100%; height: 100%; }
+  .badge.bus span { width: 52px; height: 52px; border-radius: 50%; font-size: 26px; }
+  .bar { flex: 1; min-width: 0; display: flex; align-items: center; padding: 0 14px; background: var(--row); font-weight: 700; font-size: 28px; }
+  .bar .dir { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar .t { text-align: right; line-height: 1; margin-left: 12px; }
+  .bar .t b { display: block; font-size: 28px; }
+  .bar .t small { font-weight: 500; font-size: 17px; }
+  .delay { color: var(--red); }
+  .first .bar { background: var(--red); color: #fff; }
+  .first .delay { color: #fff; }
+  .cancelled .dir { text-decoration: line-through; }
+  .head .badge { background: var(--dark); }
+  .head .badge span { width: 54px; height: 54px; border: 3px solid #fff; border-radius: 50%; font-size: 32px; }
+  .head .bar { background: var(--dark); color: #fff; font-size: 38px; }
+  .head .t { font-size: 30px; }
+  .head .t small { display: block; font-size: 15px; font-style: italic; }
+  /* e-ink: only black, white, red. Grey rows become white with a black rule. */
+  .eink #stage { --dark: #000; --row: #fff; }
+  .eink .r:not(.head):not(.first) .bar { border-bottom: 3px solid #000; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+const q = new URLSearchParams(location.search)
+const eink = q.has('eink')
+if (eink) document.documentElement.classList.add('eink')
+
+// ponytail: BSAG line colours, from the network map by eye; unknown lines fall back to grey.
+const COLORS = { 1: '#009a44', 2: '#1e3d8f', 3: '#0099d8', 4: '#d0021b', 5: '#00a99d', 6: '#f2b800', 8: '#8cc63f', 10: '#5b2c83', 26: '#d0021b', 27: '#e8790f' }
+const badgeColor = r => eink ? (r.tram ? '#d0021b' : '#000') : (COLORS[parseInt(r.line)] ?? '#6d6d6d') // "27E" -> 27
+
+const hhmm = iso => new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+const esc = s => String(s).replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`)
+
+function timeCell(r) {
+  if (r.cancelled) return `<b>fällt aus</b><small>${hhmm(r.time)}</small>`
+  const big = r.leaveInMin === 0 ? 'jetzt los' : r.leaveInMin <= 60 ? `los in ${r.leaveInMin} min` : hhmm(r.time)
+  const delay = r.delayMin > 0 ? ` <span class="delay">+${r.delayMin}</span>` : ''
+  return `<b>${big}</b><small>${hhmm(r.time)}${delay}</small>`
+}
+
+function row(r, i) {
+  const shape = r.tram ? '' : ' bus'
+  return `<div class="r${i === 0 ? ' first' : ''}${r.cancelled ? ' cancelled' : ''}">
+    <div class="badge${shape}"><span style="background:${badgeColor(r)}">${esc(r.line)}</span></div>
+    <div class="bar"><span class="dir">${esc(r.direction)}</span><span class="t">${timeCell(r)}</span></div></div>`
+}
+
+function render(name, rows, status) {
+  const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  document.getElementById('stage').innerHTML = `
+    <div class="r head"><div class="badge"><span>H</span></div>
+      <div class="bar"><span class="dir">${esc(name)}</span><span class="t">${now}${status ? `<small>${status}</small>` : ''}</span></div></div>
+    ${rows}`
+}
+
+const message = text => `<div class="r first"><div class="badge"></div><div class="bar"><span class="dir">${text}</span></div></div>`
+
+async function load() {
+  try {
+    const res = await fetch('/api/board' + location.search)
+    if (!res.ok) throw new Error(await res.text())
+    const b = await res.json()
+    render(b.name, b.rows.length ? b.rows.map(row).join('') : message('Keine Abfahrten in den nächsten 90 min'),
+      b.stale ? `Stand ${hhmm(b.updatedAt)} ⚠` : '')
+  } catch (e) {
+    console.error(e)
+    render('Haltestellenanzeige', message('Keine Verbindung zur Fahrplanauskunft'), '')
+  }
+  await document.fonts.ready
+  document.body.dataset.ready = '1'
+}
+
+function fit() {
+  if (eink) return
+  const s = Math.min(innerWidth / 800, innerHeight / 480)
+  const st = document.getElementById('stage').style
+  st.transform = `scale(${s})`
+  st.left = (innerWidth - 800 * s) / 2 + 'px'
+  st.top = (innerHeight - 480 * s) / 2 + 'px'
+}
+addEventListener('resize', fit)
+fit()
+load()
+if (!eink) setInterval(load, 30_000)
+</script>
+</body>
+</html>

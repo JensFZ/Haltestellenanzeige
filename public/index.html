@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Haltestellenanzeige</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --red: #d0021b; --dark: #3c3c3a; --row: #e4e2de; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Fira Sans Condensed', sans-serif; max-width: 640px; margin: 0 auto; padding: 16px; background: #fff; color: #222; font-size: 18px; }
+  h1 { background: var(--red); color: #fff; padding: 10px 14px; margin: 0 0 16px; }
+  label { display: block; font-weight: 700; margin: 14px 0 4px; }
+  input { width: 100%; font: inherit; padding: 8px 10px; border: 2px solid var(--dark); }
+  ul { list-style: none; padding: 0; margin: 4px 0; }
+  li button { width: 100%; text-align: left; font: inherit; padding: 8px 10px; margin-top: 3px; border: 0; background: var(--row); cursor: pointer; }
+  li button:hover, li button:focus { background: var(--dark); color: #fff; }
+  .hint { font-size: 15px; color: #555; }
+  .links a { display: block; word-break: break-all; margin-top: 6px; color: var(--red); }
+</style>
+</head>
+<body>
+<h1>Haltestellenanzeige</h1>
+
+<label for="q">Haltestelle suchen</label>
+<input id="q" autocomplete="off" placeholder="z. B. Huckelriede">
+<ul id="hits"></ul>
+<p id="chosen" class="hint">Noch keine Haltestelle gewählt.</p>
+
+<label for="offset">Weg zur Haltestelle (Minuten)</label>
+<input id="offset" type="number" min="0" max="60" value="5">
+
+<label for="lines">Nur diese Linien <span class="hint">(optional, Komma-getrennt, z. B. 4,6,26)</span></label>
+<input id="lines">
+
+<label for="dir">Nur Richtungen mit <span class="hint">(optional, Textteil des Ziels, Komma-getrennt)</span></label>
+<input id="dir" placeholder="z. B. Lilienthal, Universität">
+
+<div class="links" id="links"></div>
+
+<script>
+const $ = id => document.getElementById(id)
+let stop = null, timer
+
+$('q').addEventListener('input', () => {
+  clearTimeout(timer)
+  timer = setTimeout(async () => {
+    const hits = await (await fetch('/api/stops?q=' + encodeURIComponent($('q').value))).json()
+    $('hits').innerHTML = ''
+    for (const h of hits) {
+      const b = document.createElement('button')
+      b.textContent = h.name
+      b.onclick = () => { stop = h; $('hits').innerHTML = ''; $('chosen').textContent = 'Gewählt: ' + h.name; update() }
+      $('hits').appendChild(document.createElement('li')).appendChild(b)
+    }
+  }, 300)
+})
+for (const id of ['offset', 'lines', 'dir']) $(id).addEventListener('input', update)
+
+function update() {
+  if (!stop) return
+  const p = new URLSearchParams({ stop: stop.id, offset: $('offset').value })
+  if ($('lines').value.trim()) p.set('lines', $('lines').value.replace(/\s/g, ''))
+  if ($('dir').value.trim()) p.set('dir', $('dir').value.trim())
+  const board = `${location.origin}/board?${p}`, bin = `${location.origin}/board.bin?${p}`
+  $('links').innerHTML = `<label>Anzeige (Browser)</label><a href="${board}">${board}</a>
+    <label>URL fürs ESP / E-Ink</label><a>${bin}</a>
+    <label>E-Ink-Vorschau</label><a href="${board}&eink=1">${board}&eink=1</a>`
+}
+</script>
+</body>
+</html>
