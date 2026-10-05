@@ -41,9 +41,19 @@ const q = new URLSearchParams(location.search)
 const eink = q.has('eink')
 if (eink) document.documentElement.classList.add('eink')
 
-// ponytail: BSAG line colours, from the network map by eye; unknown lines fall back to grey.
-const COLORS = { 1: '#009a44', 2: '#1e3d8f', 3: '#0099d8', 4: '#d0021b', 5: '#00a99d', 6: '#f2b800', 8: '#8cc63f', 10: '#5b2c83', 26: '#d0021b', 27: '#e8790f' }
-const badgeColor = r => eink ? (r.tram ? '#d0021b' : '#000') : (COLORS[parseInt(r.line)] ?? '#6d6d6d') // "27E" -> 27
+// BSAG line colours (bsag.de "Direktauswahl", sampled by eye); unknown lines fall back to grey.
+const YELLOW = '#ffcc00'
+const COLORS = {}
+for (const [color, lines] of Object.entries({
+  '#009640': '1 25 25X 62 81 98 N1', '#005ca9': '2 23', '#009fe3': '3 21 61 91 92 N6 N10',
+  '#e30613': '4 26 40 41 94 N4', '#0098a1': '5', [YELLOW]: '6 28 33 34 38 39 55 67 68 93 N9',
+  '#95c11f': '8 20 29 31 52 65 66 80 N7', '#312783': '10 63 90', '#a69bd0': '22 N8',
+  '#951b81': '24 37 96', '#ef7d00': '27 44 82 95 N5', '#f0641e': '57 58', '#e5007d': 'N3',
+})) for (const l of lines.split(' ')) COLORS[l] = color
+const lineColor = r => COLORS[r.line] ?? COLORS[parseInt(r.line)] ?? '#6d6d6d' // "27E" -> 27
+const badgeColor = r => eink ? (r.tram ? '#d0021b' : '#000') : lineColor(r)
+// Trams and night lines (N1…) are squares, all other buses circles.
+const square = r => r.tram || /^N\d/.test(r.line)
 
 const hhmm = iso => new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
 const esc = s => String(s).replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`)
@@ -56,9 +66,10 @@ function timeCell(r) {
 }
 
 function row(r) {
-  const shape = r.tram ? '' : ' bus'
+  const shape = square(r) ? '' : ' bus'
+  const text = !eink && lineColor(r) === YELLOW ? ';color:#222' : ''
   return `<div class="r${r.cancelled ? ' cancelled' : ''}">
-    <div class="badge${shape}"><span style="background:${badgeColor(r)}">${esc(r.line)}</span></div>
+    <div class="badge${shape}"><span style="background:${badgeColor(r)}${text}">${esc(r.line)}</span></div>
     <div class="bar"><span class="dir">${esc(r.direction)}</span><span class="t">${timeCell(r)}</span></div></div>`
 }
 
