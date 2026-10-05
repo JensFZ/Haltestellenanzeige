@@ -11,7 +11,7 @@ export type Row = {
   leaveInMin: number // minutes until you have to leave (offset already subtracted)
 }
 
-export type Options = { offset: number; lines: string[]; dirs: string[]; max: number }
+export type Options = { offset: number; lines: string[]; dirs: string[]; max: number; mode?: 'tram' | 'bus' }
 
 // HAFAS/VBN tags trams as "dial-a-ride", so the name prefix ("Tram 4", "Bus 26") is the reliable source.
 export function toRow(d: any, now: number, offset: number): Row {
@@ -35,6 +35,7 @@ export function selectRows(departures: any[], now: number, o: Options): Row[] {
   return departures
     .map(d => toRow(d, now, o.offset))
     .filter(r => r.leaveInMin >= 0)
+    .filter(r => !o.mode || r.tram === (o.mode === 'tram'))
     .filter(r => !lines.length || lines.includes(r.line.toLowerCase()))
     .filter(r => !dirs.length || dirs.some(d => r.direction.toLowerCase().includes(d)))
     .sort((a, b) => a.leaveInMin - b.leaveInMin)

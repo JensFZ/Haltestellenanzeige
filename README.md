@@ -22,7 +22,7 @@ Auf `http://<server>:3000/` Haltestelle suchen, Weg in Minuten und optionale Fil
 
 | Pfad | Zweck |
 |---|---|
-| `/board?stop=…&offset=…&lines=…&dir=…` | Tafel im Browser |
+| `/board?stop=…&offset=…&mode=tram\|bus&lines=…&dir=…` | Tafel im Browser (`mode` weglassen = beide) |
 | `/board?…&eink=1` | E-Ink-Vorschau |
 | `/board.bin?…` | 96.000 Byte Bitebenen fürs ESP (Header `ETag`, `X-Sleep`) |
 | `/api/board?…`, `/api/stops?q=…` | JSON |

@@ -61,6 +61,7 @@ async function boardJson(q: URLSearchParams) {
     lines: list(q.get('lines')),
     dirs: list(q.get('dir')),
     max: 6,
+    mode: q.get('mode') === 'tram' || q.get('mode') === 'bus' ? (q.get('mode') as 'tram' | 'bus') : undefined,
   })
   return { name: d.name, updatedAt: new Date(d.at).toISOString(), stale: d.stale, rows }
 }

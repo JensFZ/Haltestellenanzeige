@@ -20,4 +20,6 @@ test('offset, filters, sorting, cancelled', () => {
   assert.deepEqual(selectRows(deps, now, { offset: 5, lines: ['26'], dirs: [], max: 6 }).map(r => r.line), ['26'])
   assert.deepEqual(selectRows(deps, now, { offset: 0, lines: [], dirs: ['lilien'], max: 6 }).map(r => r.direction), ['Lilienthal'])
   assert.equal(selectRows(deps, now, { offset: 0, lines: [], dirs: [], max: 2 }).length, 2)
+  assert.deepEqual(selectRows(deps, now, { offset: 0, lines: [], dirs: [], max: 6, mode: 'bus' }).map(r => r.line), ['26'])
+  assert.deepEqual(selectRows(deps, now, { offset: 0, lines: [], dirs: [], max: 6, mode: 'tram' }).map(r => r.line), ['4', '6', '4'])
 })
