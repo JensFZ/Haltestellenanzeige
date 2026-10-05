@@ -23,17 +23,15 @@
   .bar .t b { display: block; font-size: 28px; }
   .bar .t small { font-weight: 500; font-size: 17px; }
   .delay { color: var(--red); }
-  .first .bar { background: var(--red); color: #fff; }
-  .first .delay { color: #fff; }
   .cancelled .dir { text-decoration: line-through; }
-  .head .badge { background: var(--dark); }
+  .head .badge { background: var(--red); }
   .head .badge span { width: 54px; height: 54px; border: 3px solid #fff; border-radius: 50%; font-size: 32px; }
-  .head .bar { background: var(--dark); color: #fff; font-size: 38px; }
+  .head .bar { background: var(--red); color: #fff; font-size: 38px; }
   .head .t { font-size: 30px; }
   .head .t small { display: block; font-size: 15px; font-style: italic; }
   /* e-ink: only black, white, red. Grey rows become white with a black rule. */
   .eink #stage { --dark: #000; --row: #fff; }
-  .eink .r:not(.head):not(.first) .bar { border-bottom: 3px solid #000; }
+  .eink .r:not(.head) .bar { border-bottom: 3px solid #000; }
 </style>
 </head>
 <body>
@@ -57,9 +55,9 @@ function timeCell(r) {
   return `<b>${big}</b><small>${hhmm(r.time)}${delay}</small>`
 }
 
-function row(r, i) {
+function row(r) {
   const shape = r.tram ? '' : ' bus'
-  return `<div class="r${i === 0 ? ' first' : ''}${r.cancelled ? ' cancelled' : ''}">
+  return `<div class="r${r.cancelled ? ' cancelled' : ''}">
     <div class="badge${shape}"><span style="background:${badgeColor(r)}">${esc(r.line)}</span></div>
     <div class="bar"><span class="dir">${esc(r.direction)}</span><span class="t">${timeCell(r)}</span></div></div>`
 }
@@ -72,7 +70,7 @@ function render(name, rows, status) {
     ${rows}`
 }
 
-const message = text => `<div class="r first"><div class="badge"></div><div class="bar"><span class="dir">${text}</span></div></div>`
+const message = text => `<div class="r"><div class="badge"></div><div class="bar"><span class="dir">${text}</span></div></div>`
 
 async function load() {
   try {
