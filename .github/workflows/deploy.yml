@@ -31,7 +31,11 @@ jobs:
         run: npm test
 
       - name: Build Docker image
-        run: docker build -t "$IMAGE" .
+        run: |
+          docker build \
+            --build-arg COMMIT_SHA="${{ github.sha }}" \
+            --build-arg COMMIT_TIME="$(git log -1 --format=%cI)" \
+            -t "$IMAGE" .
 
       - name: Save image (gzip)
         run: docker save "$IMAGE" | gzip > image.tar.gz

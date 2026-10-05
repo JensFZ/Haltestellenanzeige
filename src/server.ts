@@ -1,6 +1,7 @@
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
+import { execSync } from 'node:child_process'
 import { createClient } from 'hafas-client'
 import { profile } from 'hafas-client/p/vbn/index.js'
 import puppeteer, { type Browser } from 'puppeteer'
@@ -14,6 +15,18 @@ const W = 800, H = 480
 
 const hafas = createClient(profile, 'haltestellenanzeige')
 const pub = new URL('../public/', import.meta.url)
+
+// Commit shown on the config page: build args in Docker, local git otherwise.
+function version() {
+  let [sha, time] = [process.env.COMMIT_SHA, process.env.COMMIT_TIME]
+  if (!sha) {
+    try { [sha, time] = execSync('git log -1 --format=%H%n%cI', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().split('\n') }
+    catch { return 'dev' }
+  }
+  const when = time ? new Date(time).toLocaleString('de-DE', { timeZone: 'Europe/Berlin', dateStyle: 'short', timeStyle: 'short' }) : ''
+  return [sha.slice(0, 7), when].filter(Boolean).join(' · ')
+}
+const VERSION = version()
 
 // ponytail: in-memory cache per stop, unbounded; fine for a handful of displays.
 const cache = new Map<string, { at: number; name: string; deps: any[] }>()
@@ -105,7 +118,7 @@ createServer(async (req, res) => {
       case '/board': {
         const file = url.pathname === '/' ? 'index.html' : 'board.html'
         res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
-        return res.end(await readFile(new URL(file, pub)))
+        return res.end((await readFile(new URL(file, pub), 'utf8')).replace('{{VERSION}}', VERSION))
       }
       case '/api/stops': {
         const q = url.searchParams.get('q') ?? ''
