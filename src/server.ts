@@ -23,7 +23,8 @@ async function departures(stop: string) {
   if (hit && Date.now() - hit.at < CACHE_MS) return { ...hit, stale: false }
   try {
     const [res, loc] = await Promise.all([
-      hafas.departures(stop, { duration: 90, remarks: false }),
+      // HAFAS caps at ~50 results by default: at big stops (Domsheide) that's only ~15 min, so line filters starve.
+      hafas.departures(stop, { duration: 90, results: 300, remarks: false }),
       hit ? { name: hit.name } : hafas.stop(stop),
     ])
     const entry = { at: Date.now(), name: (loc as any).name.replace(/^Bremen\s+/, ''), deps: res.departures }
