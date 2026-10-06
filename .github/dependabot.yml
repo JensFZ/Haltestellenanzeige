@@ -17,3 +17,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Node majors by hand: only even (LTS) versions, odd ones go EOL fast.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
