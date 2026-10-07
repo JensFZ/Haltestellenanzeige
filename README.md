@@ -22,10 +22,11 @@ Auf `http://<server>:3000/` Haltestelle suchen, Weg in Minuten und optionale Fil
 
 | Pfad | Zweck |
 |---|---|
-| `/board?stop=…&offset=…&mode=tram\|bus&lines=…&dir=…` | Tafel im Browser (`mode` weglassen = beide) |
+| `/board?stop=…&offset=…&mode=tram\|bus&platform=A,B&lines=…&dir=…` | Tafel im Browser (Filter optional, `mode` weglassen = beide) |
 | `/board?…&eink=1` | E-Ink-Vorschau |
 | `/board.bin?…` | 96.000 Byte Bitebenen fürs ESP (Header `ETag`, `X-Sleep`) |
-| `/api/board?…`, `/api/stops?q=…` | JSON |
+| `/api/board?…`, `/api/stops?q=…`, `/api/platforms?stop=…` | JSON |
+| `/health` | Healthcheck (`ok`), auch als Docker-`HEALTHCHECK` |
 
 ## ESP32 / E-Ink
 
@@ -37,4 +38,4 @@ cd firmware && pio run -t upload
 
 Beim ersten Start öffnet das ESP das WLAN „Haltestellenanzeige“: dort WLAN und die `board.bin`-URL eintragen (mit der LAN-IP des Servers, nicht `localhost`). BOOT-Taste beim Reset gedrückt halten setzt alles zurück.
 
-Daten: VBN/BSAG-Fahrplanauskunft (inoffizielle HAFAS-Schnittstelle).
+Daten: VBN/BSAG-Fahrplanauskunft (inoffizielle HAFAS-Schnittstelle). Schrift: Fira Sans Condensed (SIL OFL 1.1, [public/fonts/OFL.txt](public/fonts/OFL.txt)), lokal ausgeliefert.

@@ -23,3 +23,19 @@ test('offset, filters, sorting, cancelled', () => {
   assert.deepEqual(selectRows(deps, now, { offset: 0, lines: [], dirs: [], max: 6, mode: 'bus' }).map(r => r.line), ['26'])
   assert.deepEqual(selectRows(deps, now, { offset: 0, lines: [], dirs: [], max: 6, mode: 'tram' }).map(r => r.line), ['4', '6', '4'])
 })
+
+test('platform filter, realtime flag, notices', () => {
+  const deps = [
+    dep('Tram 3', '22:50', 'Gröpelingen', { platform: 'E', delay: null }),
+    dep('Tram 3', '22:52', 'Weserwehr', { platform: 'F', remarks: [
+      { type: 'hint', text: 'Linie der BSAG, Info: 0421 59 60 59' },
+      { type: 'warning', summary: 'Bauarbeiten in der Achterstr.', text: 'lang…' },
+      { type: 'status', text: 'Fahrt fällt aus' },
+    ] }),
+  ]
+  const rows = selectRows(deps, now, { offset: 0, lines: [], dirs: [], platforms: ['e'], max: 6 })
+  assert.deepEqual(rows.map(r => [r.direction, r.live]), [['Gröpelingen', false]])
+  const [weser] = selectRows(deps, now, { offset: 0, lines: [], dirs: [], platforms: ['F'], max: 6 })
+  assert.equal(weser.live, true)
+  assert.deepEqual(weser.notices, ['Bauarbeiten in der Achterstr.', 'Fahrt fällt aus'])
+})

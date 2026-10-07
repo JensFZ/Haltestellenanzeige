@@ -23,5 +23,15 @@ Ergebnis der Grilling-Session vom 2026-10-03.
 - Firmware: PlatformIO + GxEPD2 + WiFiManager; Tafel-URL im Setup-Portal. BOOT beim Reset gedrückt halten = Einstellungen löschen.
 - Server nicht erreichbar: altes Bild bleibt, Hinweiszeile unten.
 
+## Ergänzt (2026-10-07)
+- Störungshinweise (HAFAS-Remarks `warning`/`status`) als Laufzeile im 6. Zeilenplatz; auf E-Ink statisch.
+- Steigfilter `platform=A,B`; Konfigurationsseite listet Steige mit ihren Linien.
+- Echtzeit-Symbol bei Abfahrten mit Live-Daten.
+- `/health` + Docker-`HEALTHCHECK`; Schrift lokal statt Google Fonts.
+
+## Für später
+- ESP: Firmware-Updates per WLAN (OTA).
+- ESP: Akkubetrieb mit Deep Sleep.
+
 ## Bewusst weggelassen
-- Mehrere Haltestellen pro Tafel, offizieller API-Fallback, Deep Sleep/Akku – erst bei Bedarf.
+- Mehrere Haltestellen pro Tafel, offizieller API-Fallback (VBN-Key) – erst bei Bedarf.

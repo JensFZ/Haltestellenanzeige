@@ -37,7 +37,7 @@ async function departures(stop: string) {
   try {
     const [res, loc] = await Promise.all([
       // HAFAS caps at ~50 results by default: at big stops (Domsheide) that's only ~15 min, so line filters starve.
-      hafas.departures(stop, { duration: 90, results: 300, remarks: false }),
+      hafas.departures(stop, { duration: 90, results: 300, remarks: true }),
       hit ? { name: hit.name } : hafas.stop(stop),
     ])
     const entry = { at: Date.now(), name: (loc as any).name.replace(/^Bremen\s+/, ''), deps: res.departures }
@@ -52,18 +52,36 @@ async function departures(stop: string) {
 
 const list = (v: string | null) => (v ?? '').split(',').map(s => s.trim()).filter(Boolean)
 
-async function boardJson(q: URLSearchParams) {
+function stopParam(q: URLSearchParams) {
   const stop = q.get('stop')
   if (!stop || !/^\d+$/.test(stop)) throw Object.assign(new Error('stop fehlt'), { status: 400 })
-  const d = await departures(stop)
+  return stop
+}
+
+async function boardJson(q: URLSearchParams) {
+  const d = await departures(stopParam(q))
   const rows = selectRows(d.deps, Date.now(), {
     offset: Math.max(0, Number(q.get('offset')) || 0),
     lines: list(q.get('lines')),
     dirs: list(q.get('dir')),
+    platforms: list(q.get('platform')),
     max: 6,
     mode: q.get('mode') === 'tram' || q.get('mode') === 'bus' ? (q.get('mode') as 'tram' | 'bus') : undefined,
   })
   return { name: d.name, updatedAt: new Date(d.at).toISOString(), stale: d.stale, rows }
+}
+
+// Platforms of a stop with the lines using them, for the platform filter on the config page.
+async function platformsJson(q: URLSearchParams) {
+  const d = await departures(stopParam(q))
+  const map = new Map<string, Set<string>>()
+  for (const r of selectRows(d.deps, Date.now(), { offset: 0, lines: [], dirs: [], max: Infinity })) {
+    if (!r.platform) continue
+    if (!map.has(r.platform)) map.set(r.platform, new Set())
+    map.get(r.platform)!.add(r.line)
+  }
+  return [...map].sort(([a], [b]) => a.localeCompare(b))
+    .map(([platform, lines]) => ({ platform, lines: [...lines].sort((a, b) => parseInt(a) - parseInt(b) || a.localeCompare(b)) }))
 }
 
 let browser: Promise<Browser> | undefined
@@ -127,8 +145,13 @@ createServer(async (req, res) => {
         res.writeHead(200, { 'content-type': 'application/json' })
         return res.end(JSON.stringify(locs.map((l: any) => ({ id: l.id, name: l.name }))))
       }
+      case '/health': {
+        res.writeHead(200, { 'content-type': 'text/plain' })
+        return res.end('ok')
+      }
+      case '/api/platforms':
       case '/api/board': {
-        const body = JSON.stringify(await boardJson(url.searchParams))
+        const body = JSON.stringify(await (url.pathname === '/api/board' ? boardJson : platformsJson)(url.searchParams))
         res.writeHead(200, { 'content-type': 'application/json' })
         return res.end(body)
       }
@@ -147,6 +170,13 @@ createServer(async (req, res) => {
         res.writeHead(200, { 'content-type': 'application/octet-stream', 'content-length': buf.length, etag, 'x-sleep': sleep })
         return res.end(buf)
       }
+    }
+    // Fonts: fixed whitelist pattern, so no path traversal out of public/fonts.
+    const font = url.pathname.match(/^\/fonts\/([\w-]+\.(woff2|css))$/)
+    const fontFile = font && await readFile(new URL('fonts/' + font[1], pub)).catch(() => null)
+    if (font && fontFile) {
+      res.writeHead(200, { 'content-type': font[2] === 'css' ? 'text/css' : 'font/woff2', 'cache-control': 'public, max-age=604800' })
+      return res.end(fontFile)
     }
     res.writeHead(404).end('not found')
   } catch (e: any) {

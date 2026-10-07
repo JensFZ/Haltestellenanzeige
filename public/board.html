@@ -4,8 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Abfahrten</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:ital,wght@0,500;0,700;1,500&display=block" rel="stylesheet">
+<link href="/fonts/fonts.css" rel="stylesheet">
 <style>
   :root { --red: #d0021b; --dark: #3c3c3a; --row: #c6c3bd; --ink: #222; }
   * { box-sizing: border-box; margin: 0; }
@@ -23,6 +22,7 @@
   .bar .t { text-align: right; line-height: 1; margin-left: 12px; }
   .bar .t b { display: block; font-size: 28px; }
   .bar .t small { font-weight: 500; font-size: 17px; }
+  .live { width: 14px; height: 14px; margin-left: 4px; vertical-align: -1px; }
   .delay { color: var(--red); }
   .cancelled .dir { text-decoration: line-through; }
   .head .badge { background: var(--red); }
@@ -30,13 +30,22 @@
   .head .bar { background: var(--red); color: #fff; font-size: 38px; }
   .head .t { font-size: 30px; }
   .head .t small { display: block; font-size: 15px; font-style: italic; }
+  /* notices ticker: takes the 6th row slot */
+  #ticker[hidden] { display: none; }
+  #ticker .badge { background: var(--dark); font-size: 30px; }
+  #ticker .bar { background: var(--dark); color: #fff; font-weight: 500; font-size: 24px; padding: 0; }
+  .tick { flex: 1; overflow: hidden; white-space: nowrap; }
+  .tick span { display: inline-block; padding-left: 100%; animation: tick var(--d) linear infinite; }
+  @keyframes tick { to { transform: translateX(-100%); } }
   /* e-ink: only black, white, red. Grey rows become white with a black rule. */
   .eink #stage { --dark: #000; --row: #fff; }
-  .eink .r:not(.head) .bar { border-bottom: 3px solid #000; }
+  .eink .r:not(.head):not(#ticker) .bar { border-bottom: 3px solid #000; }
+  .eink .tick { padding: 0 14px; text-overflow: ellipsis; }
+  .eink .tick span { display: inline; padding: 0; animation: none; }
 </style>
 </head>
 <body>
-<div id="stage"></div>
+<div id="stage"><div id="board"></div><div id="ticker" class="r" hidden></div></div>
 <script>
 const q = new URLSearchParams(location.search)
 const eink = q.has('eink')
@@ -58,12 +67,14 @@ const square = r => r.tram || /^N\d/.test(r.line)
 
 const hhmm = iso => new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
 const esc = s => String(s).replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`)
+// "live" = realtime data present; planned-only times get no symbol.
+const LIVE = '<svg class="live" viewBox="0 0 16 16" aria-label="Echtzeit"><circle cx="3" cy="13" r="2.2" fill="currentColor"/><path d="M2 7.5a6.5 6.5 0 0 1 6.5 6.5M2 2.5a11.5 11.5 0 0 1 11.5 11.5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>'
 
 function timeCell(r) {
   if (r.cancelled) return `<b>fällt aus</b><small>${hhmm(r.time)}</small>`
   const big = r.leaveInMin === 0 ? 'jetzt los' : r.leaveInMin <= 60 ? `los in ${r.leaveInMin} min` : hhmm(r.time)
   const delay = r.delayMin > 0 ? ` <span class="delay">+${r.delayMin}</span>` : ''
-  return `<b>${big}</b><small>${hhmm(r.time)}${delay}</small>`
+  return `<b>${big}</b><small>${hhmm(r.time)}${delay}${r.live ? LIVE : ''}</small>`
 }
 
 function row(r) {
@@ -76,10 +87,20 @@ function row(r) {
 
 function render(name, rows, status) {
   const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
-  document.getElementById('stage').innerHTML = `
+  document.getElementById('board').innerHTML = `
     <div class="r head"><div class="badge"><span>H</span></div>
       <div class="bar"><span class="dir">${esc(name)}</span><span class="t">${now}${status ? `<small>${status}</small>` : ''}</span></div></div>
     ${rows}`
+}
+
+// Rebuilt only when the text changes, so the scrolling doesn't restart on every refresh.
+function setTicker(notices) {
+  const el = document.getElementById('ticker')
+  const text = notices.join('  +++  ')
+  el.hidden = !text
+  if (el.dataset.text === text) return
+  el.dataset.text = text
+  el.innerHTML = `<div class="badge"><span>!</span></div><div class="bar"><div class="tick"><span style="--d:${8 + text.length * 0.2}s">${esc(text)}</span></div></div>`
 }
 
 const message = text => `<div class="r"><div class="badge"></div><div class="bar"><span class="dir">${text}</span></div></div>`
@@ -89,10 +110,14 @@ async function load() {
     const res = await fetch('/api/board' + location.search)
     if (!res.ok) throw new Error(await res.text())
     const b = await res.json()
-    render(b.name, b.rows.length ? b.rows.map(row).join('') : message('Keine Abfahrten in den nächsten 90 min'),
+    const notices = [...new Set(b.rows.flatMap(r => r.notices))]
+    setTicker(notices)
+    const rows = notices.length ? b.rows.slice(0, 5) : b.rows // the ticker takes the 6th slot
+    render(b.name, rows.length ? rows.map(row).join('') : message('Keine Abfahrten in den nächsten 90 min'),
       b.stale ? `Stand ${hhmm(b.updatedAt)} ⚠` : '')
   } catch (e) {
     console.error(e)
+    setTicker([])
     render('Haltestellenanzeige', message('Keine Verbindung zur Fahrplanauskunft'), '')
   }
   await document.fonts.ready
