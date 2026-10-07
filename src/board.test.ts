@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { selectRows } from './board.ts'
+import { selectRows, noticesOf } from './board.ts'
 
 const now = Date.parse('2026-10-03T22:40:00+02:00')
 const dep = (name: string, when: string, direction: string, extra = {}) =>
@@ -38,4 +38,16 @@ test('platform filter, realtime flag, notices', () => {
   const [weser] = selectRows(deps, now, { offset: 0, lines: [], dirs: [], platforms: ['F'], max: 6 })
   assert.equal(weser.live, true)
   assert.deepEqual(weser.notices, ['Bauarbeiten in der Achterstr.', 'Fahrt fällt aus'])
+})
+
+test('notices are prefixed with their lines and deduplicated', () => {
+  const warn = { type: 'warning', summary: 'Bauarbeiten in der Achterstr.' }
+  const deps = [
+    dep('Tram 4', '22:50', 'Arsten', { remarks: [warn] }),
+    dep('Tram 6', '22:51', 'Flughafen', { remarks: [warn] }),
+    dep('Tram 4', '22:55', 'Lilienthal', { remarks: [warn] }),
+    dep('Bus 26', '22:56', 'Kattenturm', { remarks: [{ type: 'status', text: 'Bus 26: Fahrt fällt aus' }] }),
+  ]
+  const rows = selectRows(deps, now, { offset: 0, lines: [], dirs: [], max: 6 })
+  assert.deepEqual(noticesOf(rows), ['4/6: Bauarbeiten in der Achterstr.', '26: Fahrt fällt aus'])
 })

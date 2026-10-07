@@ -34,6 +34,18 @@ export function toRow(d: any, now: number, offset: number): Row {
   }
 }
 
+// Unique notices of the shown rows, each prefixed with the lines it concerns: "4/6: Bauarbeiten …".
+// HAFAS sometimes already prefixes the text ("Bus 26: Fahrt fällt aus …"); that prefix is dropped.
+export function noticesOf(rows: Row[]): string[] {
+  const byText = new Map<string, Set<string>>()
+  for (const r of rows) for (const n of r.notices) {
+    const text = n.replace(/^(Bus|Tram|STR)\s+\S+:\s*/i, '')
+    if (!byText.has(text)) byText.set(text, new Set())
+    byText.get(text)!.add(r.line)
+  }
+  return [...byText].map(([text, lines]) => `${[...lines].join('/')}: ${text}`)
+}
+
 export function selectRows(departures: any[], now: number, o: Options): Row[] {
   const lines = o.lines.map(l => l.toLowerCase())
   const dirs = o.dirs.map(d => d.toLowerCase())

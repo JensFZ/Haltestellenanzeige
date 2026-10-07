@@ -5,7 +5,7 @@ import { execSync } from 'node:child_process'
 import { createClient } from 'hafas-client'
 import { profile } from 'hafas-client/p/vbn/index.js'
 import puppeteer, { type Browser } from 'puppeteer'
-import { selectRows } from './board.ts'
+import { selectRows, noticesOf } from './board.ts'
 
 const PORT = Number(process.env.PORT ?? 3000)
 const CACHE_MS = 45_000
@@ -68,7 +68,9 @@ async function boardJson(q: URLSearchParams) {
     max: 6,
     mode: q.get('mode') === 'tram' || q.get('mode') === 'bus' ? (q.get('mode') as 'tram' | 'bus') : undefined,
   })
-  return { name: d.name, updatedAt: new Date(d.at).toISOString(), stale: d.stale, rows }
+  // The notices ticker takes the 6th row slot, so only the 5 shown rows count for it.
+  const notices = noticesOf(rows.slice(0, 5))
+  return { name: d.name, updatedAt: new Date(d.at).toISOString(), stale: d.stale, rows: notices.length ? rows.slice(0, 5) : rows, notices }
 }
 
 // Platforms of a stop with the lines using them, for the platform filter on the config page.

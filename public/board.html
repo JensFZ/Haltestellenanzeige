@@ -110,10 +110,8 @@ async function load() {
     const res = await fetch('/api/board' + location.search)
     if (!res.ok) throw new Error(await res.text())
     const b = await res.json()
-    const notices = [...new Set(b.rows.flatMap(r => r.notices))]
-    setTicker(notices)
-    const rows = notices.length ? b.rows.slice(0, 5) : b.rows // the ticker takes the 6th slot
-    render(b.name, rows.length ? rows.map(row).join('') : message('Keine Abfahrten in den nächsten 90 min'),
+    setTicker(b.notices)
+    render(b.name, b.rows.length ? b.rows.map(row).join('') : message('Keine Abfahrten in den nächsten 90 min'),
       b.stale ? `Stand ${hhmm(b.updatedAt)} ⚠` : '')
   } catch (e) {
     console.error(e)
