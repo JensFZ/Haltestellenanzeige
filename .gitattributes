@@ -1,0 +1,11 @@
+# Alle Textdateien mit LF speichern
+* text=auto eol=lf
+
+# Binärdateien nicht verändern
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
