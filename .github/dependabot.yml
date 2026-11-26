@@ -6,7 +6,7 @@ updates:
       interval: weekly
     groups:
       npm:
-        patterns: ["*"]
+        patterns: ['*']
 
   - package-ecosystem: github-actions
     directory: /
@@ -20,4 +20,4 @@ updates:
     ignore:
       # Node majors by hand: only even (LTS) versions, odd ones go EOL fast.
       - dependency-name: node
-        update-types: ["version-update:semver-major"]
+        update-types: ['version-update:semver-major']

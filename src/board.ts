@@ -13,24 +13,40 @@ export type Row = {
   notices: string[] // warnings/status remarks, e.g. "Bauarbeiten in der Achterstr."
 }
 
+// The subset of hafas-client's departure object we use (the package ships no types).
+export type Departure = {
+  line?: { name?: string }
+  when?: string | null
+  plannedWhen?: string | null
+  direction?: string | null
+  platform?: string | null
+  plannedPlatform?: string | null
+  delay?: number | null
+  cancelled?: boolean
+  remarks?: { type?: string; summary?: string; text?: string }[]
+}
+
 export type Options = { offset: number; lines: string[]; dirs: string[]; platforms?: string[]; max: number; mode?: 'tram' | 'bus' }
 
 // HAFAS/VBN tags trams as "dial-a-ride", so the name prefix ("Tram 4", "Bus 26") is the reliable source.
-export function toRow(d: any, now: number, offset: number): Row {
+export function toRow(d: Departure, now: number, offset: number): Row {
   const name: string = d.line?.name ?? '?'
-  const when = Date.parse(d.when ?? d.plannedWhen)
+  const when = Date.parse(d.when ?? d.plannedWhen ?? '')
   return {
     line: name.replace(/^(Tram|Bus|STR|RUF)\s+/i, ''),
     tram: /^(Tram|STR)\b/i.test(name),
     direction: d.direction ?? '',
     platform: d.platform ?? d.plannedPlatform ?? null,
-    time: d.plannedWhen ?? d.when,
+    time: d.plannedWhen ?? d.when ?? '',
     delayMin: d.delay == null ? null : Math.round(d.delay / 60),
     cancelled: !!d.cancelled,
     leaveInMin: Math.floor((when - now) / 60000) - offset,
     live: d.delay != null,
     // "hint" remarks are boilerplate ("Linie der BSAG, Info: 0421 …"); warnings/status are the real news.
-    notices: (d.remarks ?? []).filter((r: any) => r.type !== 'hint').map((r: any) => r.summary || r.text).filter(Boolean),
+    notices: (d.remarks ?? [])
+      .filter(r => r.type !== 'hint')
+      .map(r => r.summary || r.text)
+      .filter((n): n is string => !!n),
   }
 }
 
@@ -38,15 +54,16 @@ export function toRow(d: any, now: number, offset: number): Row {
 // HAFAS sometimes already prefixes the text ("Bus 26: Fahrt fällt aus …"); that prefix is dropped.
 export function noticesOf(rows: Row[]): string[] {
   const byText = new Map<string, Set<string>>()
-  for (const r of rows) for (const n of r.notices) {
-    const text = n.replace(/^(Bus|Tram|STR)\s+\S+:\s*/i, '')
-    if (!byText.has(text)) byText.set(text, new Set())
-    byText.get(text)!.add(r.line)
-  }
+  for (const r of rows)
+    for (const n of r.notices) {
+      const text = n.replace(/^(Bus|Tram|STR)\s+\S+:\s*/i, '')
+      if (!byText.has(text)) byText.set(text, new Set())
+      byText.get(text)!.add(r.line)
+    }
   return [...byText].map(([text, lines]) => `${[...lines].join('/')}: ${text}`)
 }
 
-export function selectRows(departures: any[], now: number, o: Options): Row[] {
+export function selectRows(departures: Departure[], now: number, o: Options): Row[] {
   const lines = o.lines.map(l => l.toLowerCase())
   const dirs = o.dirs.map(d => d.toLowerCase())
   const platforms = (o.platforms ?? []).map(p => p.toLowerCase())

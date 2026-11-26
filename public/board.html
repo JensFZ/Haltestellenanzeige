@@ -1,139 +1,297 @@
 <!doctype html>
 <html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Abfahrten</title>
-<link href="/fonts/fonts.css" rel="stylesheet">
-<style>
-  :root { --red: #d0021b; --dark: #3c3c3a; --row: #c6c3bd; --ink: #222; }
-  * { box-sizing: border-box; margin: 0; }
-  html, body, * { cursor: none !important; } /* kiosk: hide the mouse pointer */
-  html, body { height: 100%; background: #202020; overflow: hidden; }
-  body { font-family: 'Fira Sans Condensed', sans-serif; color: var(--ink); }
-  #stage { width: 800px; height: 480px; background: #fff; padding: 16px; position: absolute; left: 0; top: 0; transform-origin: 0 0; }
-  .r { display: flex; gap: 10px; height: 58px; margin-top: 5px; }
-  .r.head { height: 72px; margin: 0 0 8px; }
-  .badge { width: 80px; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 34px; }
-  .badge span { display: grid; place-items: center; width: 100%; height: 100%; }
-  .badge.bus span { width: 52px; height: 52px; border-radius: 50%; font-size: 26px; }
-  .bar { flex: 1; min-width: 0; display: flex; align-items: center; padding: 0 14px; background: var(--row); font-weight: 700; font-size: 28px; }
-  .bar .dir { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bar .t { text-align: right; line-height: 1; margin-left: 12px; }
-  .bar .t b { display: block; font-size: 28px; }
-  .bar .t small { font-weight: 500; font-size: 17px; }
-  .live { width: 14px; height: 14px; margin-left: 4px; vertical-align: -1px; }
-  .delay { color: var(--red); }
-  .cancelled .dir { text-decoration: line-through; }
-  .head .badge { background: var(--red); }
-  .head .badge span { width: 54px; height: 54px; border: 3px solid #fff; border-radius: 50%; font-size: 32px; }
-  .head .bar { background: var(--red); color: #fff; font-size: 38px; }
-  .head .t { font-size: 30px; }
-  .head .t small { display: block; font-size: 15px; font-style: italic; }
-  /* notices ticker: takes the 6th row slot */
-  #ticker[hidden] { display: none; }
-  #ticker .badge { background: var(--dark); font-size: 30px; }
-  #ticker .bar { background: var(--dark); color: #fff; font-weight: 500; font-size: 24px; padding: 0; }
-  .tick { flex: 1; overflow: hidden; white-space: nowrap; }
-  .tick span { display: inline-block; padding-left: 100%; animation: tick var(--d) linear infinite; }
-  @keyframes tick { to { transform: translateX(-100%); } }
-  /* e-ink: only black, white, red. Grey rows become white with a black rule. */
-  .eink #stage { --dark: #000; --row: #fff; }
-  .eink .r:not(.head):not(#ticker) .bar { border-bottom: 3px solid #000; }
-  .eink .tick { padding: 0 14px; text-overflow: ellipsis; }
-  .eink .tick span { display: inline; padding: 0; animation: none; }
-</style>
-</head>
-<body>
-<div id="stage"><div id="board"></div><div id="ticker" class="r" hidden></div></div>
-<script>
-const q = new URLSearchParams(location.search)
-const eink = q.has('eink')
-if (eink) document.documentElement.classList.add('eink')
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Abfahrten</title>
+    <link href="/fonts/fonts.css" rel="stylesheet" />
+    <style>
+      :root {
+        --red: #d0021b;
+        --dark: #3c3c3a;
+        --row: #c6c3bd;
+        --ink: #222;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html,
+      body,
+      * {
+        cursor: none !important;
+      } /* kiosk: hide the mouse pointer */
+      html,
+      body {
+        height: 100%;
+        background: #202020;
+        overflow: hidden;
+      }
+      body {
+        font-family: 'Fira Sans Condensed', sans-serif;
+        color: var(--ink);
+      }
+      #stage {
+        width: 800px;
+        height: 480px;
+        background: #fff;
+        padding: 16px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        transform-origin: 0 0;
+      }
+      .r {
+        display: flex;
+        gap: 10px;
+        height: 58px;
+        margin-top: 5px;
+      }
+      .r.head {
+        height: 72px;
+        margin: 0 0 8px;
+      }
+      .badge {
+        width: 80px;
+        flex: none;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 34px;
+      }
+      .badge span {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+      }
+      .badge.bus span {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        font-size: 26px;
+      }
+      .bar {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        background: var(--row);
+        font-weight: 700;
+        font-size: 28px;
+      }
+      .bar .dir {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar .t {
+        text-align: right;
+        line-height: 1;
+        margin-left: 12px;
+      }
+      .bar .t b {
+        display: block;
+        font-size: 28px;
+      }
+      .bar .t small {
+        font-weight: 500;
+        font-size: 17px;
+      }
+      .live {
+        width: 14px;
+        height: 14px;
+        margin-left: 4px;
+        vertical-align: -1px;
+      }
+      .delay {
+        color: var(--red);
+      }
+      .cancelled .dir {
+        text-decoration: line-through;
+      }
+      .head .badge {
+        background: var(--red);
+      }
+      .head .badge span {
+        width: 54px;
+        height: 54px;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        font-size: 32px;
+      }
+      .head .bar {
+        background: var(--red);
+        color: #fff;
+        font-size: 38px;
+      }
+      .head .t {
+        font-size: 30px;
+      }
+      .head .t small {
+        display: block;
+        font-size: 15px;
+        font-style: italic;
+      }
+      /* notices ticker: takes the 6th row slot */
+      #ticker[hidden] {
+        display: none;
+      }
+      #ticker .badge {
+        background: var(--dark);
+        font-size: 30px;
+      }
+      #ticker .bar {
+        background: var(--dark);
+        color: #fff;
+        font-weight: 500;
+        font-size: 24px;
+        padding: 0;
+      }
+      .tick {
+        flex: 1;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      .tick span {
+        display: inline-block;
+        padding-left: 100%;
+        animation: tick var(--d) linear infinite;
+      }
+      @keyframes tick {
+        to {
+          transform: translateX(-100%);
+        }
+      }
+      /* e-ink: only black, white, red. Grey rows become white with a black rule. */
+      .eink #stage {
+        --dark: #000;
+        --row: #fff;
+      }
+      .eink .r:not(.head):not(#ticker) .bar {
+        border-bottom: 3px solid #000;
+      }
+      .eink .tick {
+        padding: 0 14px;
+        text-overflow: ellipsis;
+      }
+      .eink .tick span {
+        display: inline;
+        padding: 0;
+        animation: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <div id="board"></div>
+      <div id="ticker" class="r" hidden></div>
+    </div>
+    <script>
+      const q = new URLSearchParams(location.search)
+      const eink = q.has('eink')
+      if (eink) document.documentElement.classList.add('eink')
 
-// BSAG line colours (bsag.de "Direktauswahl", sampled by eye); unknown lines fall back to grey.
-const YELLOW = '#ffcc00'
-const COLORS = {}
-for (const [color, lines] of Object.entries({
-  '#009640': '1 25 25X 62 81 98 N1', '#005ca9': '2 23', '#009fe3': '3 21 61 91 92 N6 N10',
-  '#e30613': '4 26 40 41 94 N4', '#0098a1': '5', [YELLOW]: '6 28 33 34 38 39 55 67 68 93 N9',
-  '#95c11f': '8 20 29 31 52 65 66 80 N7', '#312783': '10 63 90', '#a69bd0': '22 N8',
-  '#951b81': '24 37 96', '#ef7d00': '27 44 82 95 N5', '#f0641e': '57 58', '#e5007d': 'N3',
-})) for (const l of lines.split(' ')) COLORS[l] = color
-const lineColor = r => COLORS[r.line] ?? COLORS[parseInt(r.line)] ?? '#6d6d6d' // "27E" -> 27
-const badgeColor = r => eink ? (r.tram ? '#d0021b' : '#000') : lineColor(r)
-// Trams and night lines (N1…) are squares, all other buses circles.
-const square = r => r.tram || /^N\d/.test(r.line)
+      // BSAG line colours (bsag.de "Direktauswahl", sampled by eye); unknown lines fall back to grey.
+      const YELLOW = '#ffcc00'
+      const COLORS = {}
+      for (const [color, lines] of Object.entries({
+        '#009640': '1 25 25X 62 81 98 N1',
+        '#005ca9': '2 23',
+        '#009fe3': '3 21 61 91 92 N6 N10',
+        '#e30613': '4 26 40 41 94 N4',
+        '#0098a1': '5',
+        [YELLOW]: '6 28 33 34 38 39 55 67 68 93 N9',
+        '#95c11f': '8 20 29 31 52 65 66 80 N7',
+        '#312783': '10 63 90',
+        '#a69bd0': '22 N8',
+        '#951b81': '24 37 96',
+        '#ef7d00': '27 44 82 95 N5',
+        '#f0641e': '57 58',
+        '#e5007d': 'N3',
+      }))
+        for (const l of lines.split(' ')) COLORS[l] = color
+      const lineColor = r => COLORS[r.line] ?? COLORS[parseInt(r.line)] ?? '#6d6d6d' // "27E" -> 27
+      const badgeColor = r => (eink ? (r.tram ? '#d0021b' : '#000') : lineColor(r))
+      // Trams and night lines (N1…) are squares, all other buses circles.
+      const square = r => r.tram || /^N\d/.test(r.line)
 
-const hhmm = iso => new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
-const esc = s => String(s).replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`)
-// "live" = realtime data present; planned-only times get no symbol.
-const LIVE = '<svg class="live" viewBox="0 0 16 16" aria-label="Echtzeit"><circle cx="3" cy="13" r="2.2" fill="currentColor"/><path d="M2 7.5a6.5 6.5 0 0 1 6.5 6.5M2 2.5a11.5 11.5 0 0 1 11.5 11.5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>'
+      const hhmm = iso => new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+      const esc = s => String(s).replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`)
+      // "live" = realtime data present; planned-only times get no symbol.
+      const LIVE =
+        '<svg class="live" viewBox="0 0 16 16" aria-label="Echtzeit"><circle cx="3" cy="13" r="2.2" fill="currentColor"/><path d="M2 7.5a6.5 6.5 0 0 1 6.5 6.5M2 2.5a11.5 11.5 0 0 1 11.5 11.5" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>'
 
-function timeCell(r) {
-  if (r.cancelled) return `<b>fällt aus</b><small>${hhmm(r.time)}</small>`
-  const big = r.leaveInMin === 0 ? 'jetzt los' : r.leaveInMin <= 60 ? `los in ${r.leaveInMin} min` : hhmm(r.time)
-  const delay = r.delayMin > 0 ? ` <span class="delay">+${r.delayMin}</span>` : ''
-  return `<b>${big}</b><small>${hhmm(r.time)}${delay}${r.live ? LIVE : ''}</small>`
-}
+      function timeCell(r) {
+        if (r.cancelled) return `<b>fällt aus</b><small>${hhmm(r.time)}</small>`
+        const big = r.leaveInMin === 0 ? 'jetzt los' : r.leaveInMin <= 60 ? `los in ${r.leaveInMin} min` : hhmm(r.time)
+        const delay = r.delayMin > 0 ? ` <span class="delay">+${r.delayMin}</span>` : ''
+        return `<b>${big}</b><small>${hhmm(r.time)}${delay}${r.live ? LIVE : ''}</small>`
+      }
 
-function row(r) {
-  const shape = square(r) ? '' : ' bus'
-  const text = !eink && lineColor(r) === YELLOW ? ';color:#222' : ''
-  return `<div class="r${r.cancelled ? ' cancelled' : ''}">
+      function row(r) {
+        const shape = square(r) ? '' : ' bus'
+        const text = !eink && lineColor(r) === YELLOW ? ';color:#222' : ''
+        return `<div class="r${r.cancelled ? ' cancelled' : ''}">
     <div class="badge${shape}"><span style="background:${badgeColor(r)}${text}">${esc(r.line)}</span></div>
     <div class="bar"><span class="dir">${esc(r.direction)}</span><span class="t">${timeCell(r)}</span></div></div>`
-}
+      }
 
-function render(name, rows, status) {
-  const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
-  document.getElementById('board').innerHTML = `
+      function render(name, rows, status) {
+        const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+        document.getElementById('board').innerHTML = `
     <div class="r head"><div class="badge"><span>H</span></div>
       <div class="bar"><span class="dir">${esc(name)}</span><span class="t">${now}${status ? `<small>${status}</small>` : ''}</span></div></div>
     ${rows}`
-}
+      }
 
-// Rebuilt only when the text changes, so the scrolling doesn't restart on every refresh.
-function setTicker(notices) {
-  const el = document.getElementById('ticker')
-  const text = notices.join('  +++  ')
-  el.hidden = !text
-  if (el.dataset.text === text) return
-  el.dataset.text = text
-  el.innerHTML = `<div class="badge"><span>!</span></div><div class="bar"><div class="tick"><span style="--d:${8 + text.length * 0.2}s">${esc(text)}</span></div></div>`
-}
+      // Rebuilt only when the text changes, so the scrolling doesn't restart on every refresh.
+      function setTicker(notices) {
+        const el = document.getElementById('ticker')
+        const text = notices.join('  +++  ')
+        el.hidden = !text
+        if (el.dataset.text === text) return
+        el.dataset.text = text
+        el.innerHTML = `<div class="badge"><span>!</span></div><div class="bar"><div class="tick"><span style="--d:${8 + text.length * 0.2}s">${esc(text)}</span></div></div>`
+      }
 
-const message = text => `<div class="r"><div class="badge"></div><div class="bar"><span class="dir">${text}</span></div></div>`
+      const message = text => `<div class="r"><div class="badge"></div><div class="bar"><span class="dir">${text}</span></div></div>`
 
-async function load() {
-  try {
-    const res = await fetch('/api/board' + location.search)
-    if (!res.ok) throw new Error(await res.text())
-    const b = await res.json()
-    setTicker(b.notices)
-    render(b.name, b.rows.length ? b.rows.map(row).join('') : message('Keine Abfahrten in den nächsten 90 min'),
-      b.stale ? `Stand ${hhmm(b.updatedAt)} ⚠` : '')
-  } catch (e) {
-    console.error(e)
-    setTicker([])
-    render('Haltestellenanzeige', message('Keine Verbindung zur Fahrplanauskunft'), '')
-  }
-  await document.fonts.ready
-  document.body.dataset.ready = '1'
-}
+      async function load() {
+        try {
+          const res = await fetch('/api/board' + location.search)
+          if (!res.ok) throw new Error(await res.text())
+          const b = await res.json()
+          setTicker(b.notices)
+          render(
+            b.name,
+            b.rows.length ? b.rows.map(row).join('') : message('Keine Abfahrten in den nächsten 90 min'),
+            b.stale ? `Stand ${hhmm(b.updatedAt)} ⚠` : '',
+          )
+        } catch (e) {
+          console.error(e)
+          setTicker([])
+          render('Haltestellenanzeige', message('Keine Verbindung zur Fahrplanauskunft'), '')
+        }
+        await document.fonts.ready
+        document.body.dataset.ready = '1'
+      }
 
-function fit() {
-  if (eink) return
-  const s = Math.min(innerWidth / 800, innerHeight / 480)
-  const st = document.getElementById('stage').style
-  st.transform = `scale(${s})`
-  st.left = (innerWidth - 800 * s) / 2 + 'px'
-  st.top = (innerHeight - 480 * s) / 2 + 'px'
-}
-addEventListener('resize', fit)
-fit()
-load()
-if (!eink) setInterval(load, 30_000)
-</script>
-</body>
+      function fit() {
+        if (eink) return
+        const s = Math.min(innerWidth / 800, innerHeight / 480)
+        const st = document.getElementById('stage').style
+        st.transform = `scale(${s})`
+        st.left = (innerWidth - 800 * s) / 2 + 'px'
+        st.top = (innerHeight - 480 * s) / 2 + 'px'
+      }
+      addEventListener('resize', fit)
+      fit()
+      load()
+      if (!eink) setInterval(load, 30_000)
+    </script>
+  </body>
 </html>
