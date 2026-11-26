@@ -1,0 +1,64 @@
+repos:
+  # Secret Scanning
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+
+  # Allgemeine Qualitätsprüfungen
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+
+      - id: end-of-file-fixer
+
+      - id: check-yaml
+
+      - id: check-json
+
+      - id: check-toml
+
+      - id: check-xml
+
+      - id: check-merge-conflict
+
+      - id: detect-private-key
+
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+
+      - id: check-case-conflict
+
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Node.js / JavaScript / TypeScript
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint
+        entry: npm run lint --
+        language: system
+        types: [file]
+        files: \.[jt]sx?$
+
+      - id: prettier
+        name: Prettier
+        entry: npx prettier --check
+        language: system
+        types: [file]
+        files: \.(js|jsx|ts|tsx|json|css|scss|md|yaml|yml)$
+
+  # Dockerfile
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+
+  # Markdown
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.23.3
+    hooks:
+      - id: markdownlint-cli2

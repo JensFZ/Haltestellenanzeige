@@ -6,10 +6,18 @@
   "license": "MIT",
   "scripts": {
     "start": "node --experimental-strip-types src/server.ts",
-    "test": "node --experimental-strip-types --test src/board.test.ts"
+    "test": "node --experimental-strip-types --test src/board.test.ts",
+    "lint": "eslint"
   },
   "dependencies": {
     "hafas-client": "^6.3.6",
-    "puppeteer": "^25.12.0"
+    "puppeteer": "^25.13.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript-eslint": "^8.74.0"
   }
 }

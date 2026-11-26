@@ -1,113 +1,216 @@
 <!doctype html>
 <html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Haltestellenanzeige</title>
-<link href="/fonts/fonts.css" rel="stylesheet">
-<style>
-  :root { --red: #d0021b; --dark: #3c3c3a; --row: #e4e2de; }
-  * { box-sizing: border-box; }
-  body { font-family: 'Fira Sans Condensed', sans-serif; max-width: 640px; margin: 0 auto; padding: 16px; background: #fff; color: #222; font-size: 18px; }
-  h1 { background: var(--red); color: #fff; padding: 10px 14px; margin: 0 0 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-  h1 small { font-size: 14px; font-weight: 500; white-space: nowrap; }
-  label { display: block; font-weight: 700; margin: 14px 0 4px; }
-  input { width: 100%; font: inherit; padding: 8px 10px; border: 2px solid var(--dark); }
-  ul { list-style: none; padding: 0; margin: 4px 0; }
-  li button { width: 100%; text-align: left; font: inherit; padding: 8px 10px; margin-top: 3px; border: 0; background: var(--row); cursor: pointer; }
-  li button:hover, li button:focus { background: var(--dark); color: #fff; }
-  .hint { font-size: 15px; color: #555; }
-  .seg { border: 0; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; }
-  .seg legend { font-weight: 700; margin-bottom: 4px; padding: 0; }
-  .seg label { margin: 0; font-weight: 700; }
-  .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-  .seg label span { display: block; padding: 8px 16px; border: 2px solid var(--dark); margin-right: -2px; cursor: pointer; }
-  #platforms label span { margin-bottom: 4px; }
-  #platforms small { font-weight: 500; }
-  .seg input:checked + span { background: var(--dark); color: #fff; }
-  .seg input:focus-visible + span { outline: 3px solid var(--red); outline-offset: 1px; }
-  .links a { display: block; word-break: break-all; margin-top: 6px; color: var(--red); }
-</style>
-</head>
-<body>
-<h1>Haltestellenanzeige <small>{{VERSION}}</small></h1>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Haltestellenanzeige</title>
+    <link href="/fonts/fonts.css" rel="stylesheet" />
+    <style>
+      :root {
+        --red: #d0021b;
+        --dark: #3c3c3a;
+        --row: #e4e2de;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Fira Sans Condensed', sans-serif;
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 16px;
+        background: #fff;
+        color: #222;
+        font-size: 18px;
+      }
+      h1 {
+        background: var(--red);
+        color: #fff;
+        padding: 10px 14px;
+        margin: 0 0 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+      h1 small {
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      label {
+        display: block;
+        font-weight: 700;
+        margin: 14px 0 4px;
+      }
+      input {
+        width: 100%;
+        font: inherit;
+        padding: 8px 10px;
+        border: 2px solid var(--dark);
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 4px 0;
+      }
+      li button {
+        width: 100%;
+        text-align: left;
+        font: inherit;
+        padding: 8px 10px;
+        margin-top: 3px;
+        border: 0;
+        background: var(--row);
+        cursor: pointer;
+      }
+      li button:hover,
+      li button:focus {
+        background: var(--dark);
+        color: #fff;
+      }
+      .hint {
+        font-size: 15px;
+        color: #555;
+      }
+      .seg {
+        border: 0;
+        padding: 0;
+        margin: 14px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .seg legend {
+        font-weight: 700;
+        margin-bottom: 4px;
+        padding: 0;
+      }
+      .seg label {
+        margin: 0;
+        font-weight: 700;
+      }
+      .seg input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+      }
+      .seg label span {
+        display: block;
+        padding: 8px 16px;
+        border: 2px solid var(--dark);
+        margin-right: -2px;
+        cursor: pointer;
+      }
+      #platforms label span {
+        margin-bottom: 4px;
+      }
+      #platforms small {
+        font-weight: 500;
+      }
+      .seg input:checked + span {
+        background: var(--dark);
+        color: #fff;
+      }
+      .seg input:focus-visible + span {
+        outline: 3px solid var(--red);
+        outline-offset: 1px;
+      }
+      .links a {
+        display: block;
+        word-break: break-all;
+        margin-top: 6px;
+        color: var(--red);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Haltestellenanzeige <small>{{VERSION}}</small></h1>
 
-<label for="q">Haltestelle suchen</label>
-<input id="q" autocomplete="off" placeholder="z. B. Huckelriede">
-<ul id="hits"></ul>
-<p id="chosen" class="hint">Noch keine Haltestelle gewählt.</p>
+    <label for="q">Haltestelle suchen</label>
+    <input id="q" autocomplete="off" placeholder="z. B. Huckelriede" />
+    <ul id="hits"></ul>
+    <p id="chosen" class="hint">Noch keine Haltestelle gewählt.</p>
 
-<label for="offset">Weg zur Haltestelle (Minuten)</label>
-<input id="offset" type="number" min="0" max="60" value="5">
+    <label for="offset">Weg zur Haltestelle (Minuten)</label>
+    <input id="offset" type="number" min="0" max="60" value="5" />
 
-<fieldset class="seg">
-  <legend>Verkehrsmittel</legend>
-  <label><input type="radio" name="mode" value="" checked><span>Beide</span></label>
-  <label><input type="radio" name="mode" value="tram"><span>Straßenbahn</span></label>
-  <label><input type="radio" name="mode" value="bus"><span>Bus</span></label>
-</fieldset>
+    <fieldset class="seg">
+      <legend>Verkehrsmittel</legend>
+      <label><input type="radio" name="mode" value="" checked /><span>Beide</span></label>
+      <label><input type="radio" name="mode" value="tram" /><span>Straßenbahn</span></label>
+      <label><input type="radio" name="mode" value="bus" /><span>Bus</span></label>
+    </fieldset>
 
-<fieldset class="seg" id="platforms" hidden>
-  <legend>Nur diese Steige <span class="hint">(optional, nichts gewählt = alle)</span></legend>
-</fieldset>
+    <fieldset class="seg" id="platforms" hidden>
+      <legend>Nur diese Steige <span class="hint">(optional, nichts gewählt = alle)</span></legend>
+    </fieldset>
 
-<label for="lines">Nur diese Linien <span class="hint">(optional, Komma-getrennt, z. B. 4,6,26)</span></label>
-<input id="lines">
+    <label for="lines">Nur diese Linien <span class="hint">(optional, Komma-getrennt, z. B. 4,6,26)</span></label>
+    <input id="lines" />
 
-<label for="dir">Nur Richtungen mit <span class="hint">(optional, Textteil des Ziels, Komma-getrennt)</span></label>
-<input id="dir" placeholder="z. B. Lilienthal, Universität">
+    <label for="dir">Nur Richtungen mit <span class="hint">(optional, Textteil des Ziels, Komma-getrennt)</span></label>
+    <input id="dir" placeholder="z. B. Lilienthal, Universität" />
 
-<div class="links" id="links"></div>
+    <div class="links" id="links"></div>
 
-<script>
-const $ = id => document.getElementById(id)
-let stop = null, timer
+    <script>
+      const $ = id => document.getElementById(id)
+      let stop = null,
+        timer
 
-$('q').addEventListener('input', () => {
-  clearTimeout(timer)
-  timer = setTimeout(async () => {
-    const hits = await (await fetch('/api/stops?q=' + encodeURIComponent($('q').value))).json()
-    $('hits').innerHTML = ''
-    for (const h of hits) {
-      const b = document.createElement('button')
-      b.textContent = h.name
-      b.onclick = () => { stop = h; $('hits').innerHTML = ''; $('chosen').textContent = 'Gewählt: ' + h.name; loadPlatforms(); update() }
-      $('hits').appendChild(document.createElement('li')).appendChild(b)
-    }
-  }, 300)
-})
-for (const id of ['offset', 'lines', 'dir']) $(id).addEventListener('input', update)
-for (const r of document.getElementsByName('mode')) r.addEventListener('change', update)
+      $('q').addEventListener('input', () => {
+        clearTimeout(timer)
+        timer = setTimeout(async () => {
+          const hits = await (await fetch('/api/stops?q=' + encodeURIComponent($('q').value))).json()
+          $('hits').innerHTML = ''
+          for (const h of hits) {
+            const b = document.createElement('button')
+            b.textContent = h.name
+            b.onclick = () => {
+              stop = h
+              $('hits').innerHTML = ''
+              $('chosen').textContent = 'Gewählt: ' + h.name
+              loadPlatforms()
+              update()
+            }
+            $('hits').appendChild(document.createElement('li')).appendChild(b)
+          }
+        }, 300)
+      })
+      for (const id of ['offset', 'lines', 'dir']) $(id).addEventListener('input', update)
+      for (const r of document.getElementsByName('mode')) r.addEventListener('change', update)
 
-// Platforms (Steige) of the chosen stop, each with the lines using it, as checkboxes.
-async function loadPlatforms() {
-  const fs = $('platforms')
-  fs.querySelectorAll('label').forEach(l => l.remove())
-  const list = await (await fetch('/api/platforms?stop=' + stop.id)).json()
-  for (const p of list) {
-    const l = document.createElement('label')
-    l.innerHTML = `<input type="checkbox" name="platform"><span>Steig ${p.platform} <small>· ${p.lines.join(', ')}</small></span>`
-    l.querySelector('input').value = p.platform
-    l.querySelector('input').addEventListener('change', update)
-    fs.appendChild(l)
-  }
-  fs.hidden = list.length < 2
-}
+      // Platforms (Steige) of the chosen stop, each with the lines using it, as checkboxes.
+      async function loadPlatforms() {
+        const fs = $('platforms')
+        fs.querySelectorAll('label').forEach(l => l.remove())
+        const list = await (await fetch('/api/platforms?stop=' + stop.id)).json()
+        for (const p of list) {
+          const l = document.createElement('label')
+          l.innerHTML = `<input type="checkbox" name="platform"><span>Steig ${p.platform} <small>· ${p.lines.join(', ')}</small></span>`
+          l.querySelector('input').value = p.platform
+          l.querySelector('input').addEventListener('change', update)
+          fs.appendChild(l)
+        }
+        fs.hidden = list.length < 2
+      }
 
-function update() {
-  if (!stop) return
-  const p = new URLSearchParams({ stop: stop.id, offset: $('offset').value })
-  const mode = document.querySelector('input[name=mode]:checked').value
-  if (mode) p.set('mode', mode)
-  const platforms = [...document.querySelectorAll('input[name=platform]:checked')].map(i => i.value)
-  if (platforms.length) p.set('platform', platforms.join(','))
-  if ($('lines').value.trim()) p.set('lines', $('lines').value.replace(/\s/g, ''))
-  if ($('dir').value.trim()) p.set('dir', $('dir').value.trim())
-  const board = `${location.origin}/board?${p}`, bin = `${location.origin}/board.bin?${p}`
-  $('links').innerHTML = `<label>Anzeige (Browser)</label><a href="${board}">${board}</a>
+      function update() {
+        if (!stop) return
+        const p = new URLSearchParams({ stop: stop.id, offset: $('offset').value })
+        const mode = document.querySelector('input[name=mode]:checked').value
+        if (mode) p.set('mode', mode)
+        const platforms = [...document.querySelectorAll('input[name=platform]:checked')].map(i => i.value)
+        if (platforms.length) p.set('platform', platforms.join(','))
+        if ($('lines').value.trim()) p.set('lines', $('lines').value.replace(/\s/g, ''))
+        if ($('dir').value.trim()) p.set('dir', $('dir').value.trim())
+        const board = `${location.origin}/board?${p}`,
+          bin = `${location.origin}/board.bin?${p}`
+        $('links').innerHTML = `<label>Anzeige (Browser)</label><a href="${board}">${board}</a>
     <label>URL fürs ESP / E-Ink</label><a>${bin}</a>
     <label>E-Ink-Vorschau</label><a href="${board}&eink=1">${board}&eink=1</a>`
-}
-</script>
-</body>
+      }
+    </script>
+  </body>
 </html>

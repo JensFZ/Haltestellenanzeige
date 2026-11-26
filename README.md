@@ -20,13 +20,13 @@ docker compose up -d --build
 
 Auf `http://<server>:3000/` Haltestelle suchen, Weg in Minuten und optionale Filter eintragen → Links für Browser und ESP.
 
-| Pfad | Zweck |
-|---|---|
+| Pfad                                                               | Zweck                                                        |
+| ------------------------------------------------------------------ | ------------------------------------------------------------ |
 | `/board?stop=…&offset=…&mode=tram\|bus&platform=A,B&lines=…&dir=…` | Tafel im Browser (Filter optional, `mode` weglassen = beide) |
-| `/board?…&eink=1` | E-Ink-Vorschau |
-| `/board.bin?…` | 96.000 Byte Bitebenen fürs ESP (Header `ETag`, `X-Sleep`) |
-| `/api/board?…`, `/api/stops?q=…`, `/api/platforms?stop=…` | JSON |
-| `/health` | Healthcheck (`ok`), auch als Docker-`HEALTHCHECK` |
+| `/board?…&eink=1`                                                  | E-Ink-Vorschau                                               |
+| `/board.bin?…`                                                     | 96.000 Byte Bitebenen fürs ESP (Header `ETag`, `X-Sleep`)    |
+| `/api/board?…`, `/api/stops?q=…`, `/api/platforms?stop=…`          | JSON                                                         |
+| `/health`                                                          | Healthcheck (`ok`), auch als Docker-`HEALTHCHECK`            |
 
 ## ESP32 / E-Ink
 
